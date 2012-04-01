@@ -1,6 +1,7 @@
 require 'omniauth'
 require 'openssl'
 require 'uri'
+require 'multi_json'
 
 module OmniAuth
   module Strategies
@@ -37,7 +38,7 @@ module OmniAuth
         session[:server] = result[:server]
         session[:user]   = user
 
-        render json: result[:json]
+        MultiJson.encode(result[:json])
       end
 
       def callback_phase
@@ -110,8 +111,10 @@ module OmniAuth
         {
           :status => success,
           :json   => {
+            # TODO: fix this to be configureable
+            :url    => 'http://127.0.0.1',
             :status => success ? STATUS[:logged_in] : STATUS[:auth_fail],
-            :error  => success ? '' : 'Failed to authenticate.'
+            :error  => success ? '' : 'Failed to authenticate.',
           },
         }
       end
