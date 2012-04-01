@@ -63,15 +63,15 @@ module OmniAuth
       protected
 
       def bin2hex(bin)
-        return bin.unpack('H*')[0]
+        bin.unpack('H*')[0]
       end
 
       def hex2bin(hex)
-        return Array(hex).pack('H*')
+        Array(hex).pack('H*')
       end
 
       def wrong_stage
-        return {
+        {
           :status => true,
           :json   => { :status => STATUS[:stage_fail], :error => 'Wrong stage of logging in.' },
         }
