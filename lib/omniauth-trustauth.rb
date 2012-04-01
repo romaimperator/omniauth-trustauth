@@ -1,7 +1,4 @@
 require "omniauth-trustauth/version"
+require 'omniauth/strategies/trustauth'
 
-module Omniauth
-  module Trustauth
-    # Your code goes here...
-  end
-end
+OmniAuth.config.add_camelization('trustauth', 'TrustAuth')
