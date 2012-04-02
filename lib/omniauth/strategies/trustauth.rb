@@ -32,32 +32,35 @@ module OmniAuth
       }
 
       def request_phase
-        user = { :public_key => URI.decode(params[:public_key]), :random => params[:random] }
+        session[:authenticating] = false if session[:authenticating].nil?
 
-        result = get_challenge(user)
-        session[:server] = result[:server]
-        session[:user]   = user
+        if not session[:authenticating]
+          session[:authenticating] = true
 
-        MultiJson.encode(result[:json])
-      end
+          user = { :public_key => URI.decode(request.params['public_key']), :random => request.params['random'] }
 
-      def callback_phase
-        user = session[:user]
-        user = user.merge({ :md5 => params[:md5], :sha => params[:sha] })
-        result = authenticate(user, session[:server])
-
-        hash = auth_hash
-        hash.info[:public_key] = user[:public_key]
-        hash.info[:authorized] = result[:status]
-        if result[:status]
-          puts 'FUCK YEAH LOGGED IN'
+          result = get_challenge(user)
+          session[:server] = result[:server]
+          session[:user]   = user
         else
-          puts 'AWWW SHIT FAILED!!!'
+          session[:authenticating] = false
+
+          if not request.params.has_key?('md5') or not request.params.has_key?('sha')
+            result = wrong_stage
+          else
+            user = session[:user]
+            user = user.merge({ :md5 => request.params['md5'], :sha => request.params['sha'] })
+            result = authenticate(user, session[:server])
+
+            if result[:status]
+              puts 'FUCK YEAH LOGGED IN'
+            else
+              puts 'AWWW SHIT FAILED!!!'
+            end
+          end
         end
 
-        self.env['omniauth.auth'] = hash
-        call_app!
-        #render json: result[:json]
+        Rack::Response.new(MultiJson.encode(result[:json])).finish
       end
 
       protected
@@ -111,8 +114,7 @@ module OmniAuth
         {
           :status => success,
           :json   => {
-            # TODO: fix this to be configureable
-            :url    => 'http://127.0.0.1',
+            :url    => full_host + script_name + callback_path,
             :status => success ? STATUS[:logged_in] : STATUS[:auth_fail],
             :error  => success ? '' : 'Failed to authenticate.',
           },
