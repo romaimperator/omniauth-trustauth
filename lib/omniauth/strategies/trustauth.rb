@@ -8,28 +8,25 @@ module OmniAuth
     class TrustAuth
       include OmniAuth::Strategy
 
+      option :name, "trustauth"
       option :fields, [:public_key, :authorized]
       option :uid_field, :public_key
 
-      STATUS = {
-        :auth       => 0,
-        :auth_fail  => 1,
-        :logged_in  => 2,
-        :stage_fail => 3,
-      }
+      uid do
+        raw_info[:name]
+      end
 
-      PRE_MASTER_SECRET_LENGTH = 48
-      SERVER_RANDOM_LENGTH     = 28
-      SENDER_CLIENT            = '0x434C4E54'
+      info do
+        {
+          :name => raw_info[:public_key],
+          :public_key => raw_info[:public_key],
+          :result => raw_info[:result],
+        }
+      end
 
-      MD5_PAD = {
-          :pad1 => '363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636',
-          :pad2 => '5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c',
-      }
-      SHA_PAD = {
-          :pad1 => '36363636363636363636363636363636363636363636363636363636363636363636363636363636',
-          :pad2 => '5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c',
-      }
+      extra do
+        { :raw_info => raw_info }
+      end
 
       def request_phase
         session[:authenticating] = false if session[:authenticating].nil?
@@ -52,11 +49,8 @@ module OmniAuth
             user = user.merge({ :md5 => request.params['md5'], :sha => request.params['sha'] })
             result = authenticate(user, session[:server])
 
-            if result[:status]
-              puts 'FUCK YEAH LOGGED IN'
-            else
-              puts 'AWWW SHIT FAILED!!!'
-            end
+            session[:user][:public_key] = user[:public_key]
+            session[:user][:result] = result[:status]
           end
         end
 
@@ -64,6 +58,30 @@ module OmniAuth
       end
 
       protected
+
+      STATUS = {
+        :auth       => 0,
+        :auth_fail  => 1,
+        :logged_in  => 2,
+        :stage_fail => 3,
+      }
+
+      PRE_MASTER_SECRET_LENGTH = 48
+      SERVER_RANDOM_LENGTH     = 28
+      SENDER_CLIENT            = '0x434C4E54'
+
+      MD5_PAD = {
+          :pad1 => '363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636',
+          :pad2 => '5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c',
+      }
+      SHA_PAD = {
+          :pad1 => '36363636363636363636363636363636363636363636363636363636363636363636363636363636',
+          :pad2 => '5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c',
+      }
+
+      def raw_info
+        @raw_info ||= session[:user]
+      end
 
       def bin2hex(bin)
         bin.unpack('H*')[0]
