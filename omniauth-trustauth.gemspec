@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
-require File.expand_path('../lib/omniauth-trustauth/version', __FILE__)
+$:.push File.expand_path('../lib', __FILE__)
+require 'omniauth-trustauth/version'
 
 Gem::Specification.new do |gem|
   gem.authors       = ["romaimperator"]
@@ -15,6 +16,6 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = OmniAuth::TrustAuth::VERSION
 
-  gem.add_dependency "omniauth", "-> 1.0"
+  gem.add_dependency "omniauth", "~> 1.0"
   gem.add_dependency "multi_json"
 end
