@@ -51,6 +51,10 @@ module OmniAuth
 
             session[:user][:public_key] = user[:public_key]
             session[:user][:result] = result[:status]
+
+            if not result[:status]
+              fail!(:invalid_credentials, 'Failed to authorize the public key.')
+            end
           end
         end
 
