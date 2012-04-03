@@ -33,6 +33,7 @@ Or install it yourself as:
 </head>
 <body>
 ...
+```
 
 2. Add your handler for the OmniAuth callback. Here's an example of
    something simple:
