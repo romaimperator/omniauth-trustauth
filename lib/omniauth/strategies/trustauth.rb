@@ -29,28 +29,32 @@ module OmniAuth
       end
 
       def request_phase
-        session[:authenticating] = false if session[:authenticating].nil?
+        session[:trustauth_stage] = false if session[:trustauth_stage].nil?
 
-        if not session[:authenticating]
-          session[:authenticating] = true
+        if not session[:trustauth_stage]
+          session[:trustauth_stage] = true
 
           user = { :public_key => URI.decode(request.params['public_key']), :random => request.params['random'] }
 
           result = get_challenge(user)
-          session[:server] = result[:server]
-          session[:user]   = user
+          session[:trustauth_server] = result[:server]
+          session[:trustauth_user]   = user
         else
-          session[:authenticating] = false
+          session[:trustauth_stage] = false
 
           if not request.params.has_key?('md5') or not request.params.has_key?('sha')
             result = wrong_stage
           else
-            user = session[:user]
+            user = session[:trustauth_user]
             user = user.merge({ :md5 => request.params['md5'], :sha => request.params['sha'] })
-            result = authenticate(user, session[:server])
+            result = authenticate(user, session[:trustauth_server])
 
-            session[:user][:public_key] = user[:public_key]
-            session[:user][:result] = result[:status]
+            session.delete(:trustauth_server)
+            session.delete(:trustauth_stage)
+            session[:trustauth_user].delete(:random)
+
+            session[:trustauth_user][:public_key] = user[:public_key]
+            session[:trustauth_user][:result] = result[:status]
 
             if not result[:status]
               fail!(:invalid_credentials, 'Failed to authorize the public key.')
@@ -84,7 +88,7 @@ module OmniAuth
       }
 
       def raw_info
-        @raw_info ||= session[:user]
+        @raw_info ||= session[:trustauth_user]
       end
 
       def bin2hex(bin)
