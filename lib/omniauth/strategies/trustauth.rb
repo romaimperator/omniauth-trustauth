@@ -150,7 +150,7 @@ module OmniAuth
       def fix_key(key)
         key.gsub! /-----BEGIN PUBLIC KEY-----/, ''
         key.gsub! /-----END PUBLIC KEY-----/, ''
-        key.gsub! /\n/,''
+        key.gsub! /[\n\r]/,''
         key.gsub!(/ /,'')
         keylines = key.scan(/.{1,65}/)
         "-----BEGIN PUBLIC KEY-----\n" + keylines.join("\n") + "\n-----END PUBLIC KEY-----"
